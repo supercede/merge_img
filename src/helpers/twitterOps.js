@@ -1,6 +1,6 @@
+// /* eslint-disable */
 const Twit = require('twit');
 const { wrapTwitterErrors, errors } = require('twitter-error-handler');
-// const arrgh = require('aa')
 const {
   isTweetAReply,
   isTweetAReplyToMe,
@@ -24,12 +24,10 @@ module.exports = {
       // since_id: 1357914189273170000,
       // count: 2,
     })
-      .then((r) => r.data)
-      .then((tweets) =>
-        tweets.filter(and(isTweetAReply, not(isTweetAReplyToMe)))
-      )
-      .then((tweets) => {
-        allTweets = tweets.map((tweetObject) => {
+      .then(r => r.data)
+      .then(tweets => tweets.filter(and(isTweetAReply, not(isTweetAReplyToMe))))
+      .then(tweets => {
+        allTweets = tweets.map(tweetObject => {
           return {
             id: tweetObject.id_str,
             time: tweetObject.created_at,
@@ -40,40 +38,82 @@ module.exports = {
         return allTweets;
         // return tweets;
       })
-      .catch((e) => console.log('error', e));
+      .catch(e => console.log('error', e));
   },
 
-  getReferencedTweets: (tweets) => {
+  getReferencedTweets: mentions => {
     return T.post(`statuses/lookup`, {
-      id: pluck(tweets, 'referencing_tweet'),
+      id: pluck(mentions, 'referencing_tweet'),
       tweet_mode: 'extended',
     })
-      .then((r) => r.data)
-      .then((tweets) => tweets.filter(and(filterTweetImages)))
-      .then((tweets) => {
-        const allTweets = tweets.map((tweetObject) => {
+      .then(r => r.data)
+      .then(tweets => tweets.filter(and(filterTweetImages)))
+      .then(tweets => {
+        const allTweets = tweets.map(tweetObject => {
           return {
             id: tweetObject.id_str,
             time: tweetObject.created_at,
             author: tweetObject.user.screen_name,
             media: tweetObject.extended_entities.media,
+            // mention_id: me
           };
         });
         return allTweets;
         // return tweets;
       })
-      .then((tweets) => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
-      .catch((e) => wrapTwitterErrors('statuses/lookup', e));
+      .then(tweets => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
+      .catch(e => wrapTwitterErrors('statuses/lookup', e));
+  },
+
+  replyWithPhoto: async (media, tweet, content) => {
+    console.log('1');
+    return T.post('media/upload', { media }, (err, data, response) => {
+      // now we can assign alt text to the media, for use by screen readers and
+      // other text-based presentations and interpreters
+      // console.log('err', err);
+      console.log('err', err);
+      console.log('response', response.statusMessage);
+
+      const mediaIdStr = data.media_id_string;
+      // const altText =
+      //   'Small flowers in a planter on a sunny balcony, blossoming.';
+      const meta_params = { media_id: mediaIdStr };
+      console.log('2');
+
+      if (!err) {
+        T.post('media/metadata/create', meta_params, (err, data, response) => {
+          if (!err) {
+            // now we can reference the media and post a tweet (media will attach to the tweet)
+            const params = {
+              status: `@${tweet.author} ${content}`,
+              media_ids: [mediaIdStr],
+              in_reply_to_status_id: tweet.id,
+            };
+
+            console.log('3');
+
+            if (!err) {
+              T.post('statuses/update', params)
+                .then(res => console.log)
+                .catch(e => wrapTwitterErrors('statuses/update', e))
+                .catch(e => {
+                  console.log(e);
+                });
+            }
+          }
+        });
+      }
+    });
   },
 
   reply: async (tweet, content) => {
-    let options = {
+    const options = {
       in_reply_to_status_id: tweet.id,
       status: `@${tweet.author} ${content}`,
     };
     return T.post('statuses/update', options)
-      .catch((e) => wrapTwitterErrors('statuses/update', e))
-      .catch((e) => {
+      .catch(e => wrapTwitterErrors('statuses/update', e))
+      .catch(e => {
         console.log(e);
       });
   },

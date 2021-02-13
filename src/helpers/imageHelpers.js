@@ -1,7 +1,16 @@
 const Jimp = require('jimp');
+const Image = require('../models/image');
+const { getImage } = require('./dbHelpers');
+
+/* eslint-disable no-new */
 
 module.exports = {
-  joinImages: async (imgArr) => {
+  joinImages: async (id, imgArr) => {
+    const checkImg = await getImage(id);
+    if (checkImg) {
+      console.log(checkImg.tweetId);
+      return;
+    }
     let offsetX1, offsetX2, offsetX3, offsetX4;
     let offsetY1, offsetY2, offsetY3, offsetY4;
 
@@ -36,6 +45,8 @@ module.exports = {
         offsetY3 = (height + offsetY1) / 2;
         offsetY4 = offsetY3;
         break;
+      default:
+        break;
     }
 
     const images = [];
@@ -44,16 +55,16 @@ module.exports = {
     //   images.push((await Jimp.read(imgArr[i])).resize(dim, imgHeight));
     // }
 
-    for (var i = 0; i < imgArr.length; i++) {
+    for (let i = 0; i < imgArr.length; i++) {
       images.push(
-        await Jimp.read(imgArr[i]).then((img) => {
+        Jimp.read(imgArr[i]).then(img => {
           // console.log(img)
           const { width, height: resizeHeight } = img.bitmap;
           return img.resize(
             Math.min(dim, width),
-            Math.min(imgHeight, resizeHeight)
+            Math.min(imgHeight, resizeHeight),
           );
-        })
+        }),
       );
     }
 
@@ -66,10 +77,8 @@ module.exports = {
     };
 
     Promise.all(images)
-      .then(function (data) {
-        return Promise.all(images);
-      })
-      .then(function (data) {
+      .then(data => Promise.all(images))
+      .then(async data => {
         switch (data.length) {
           case 2:
             image.composite(data[0], offsetX1, offsetY1, options);
@@ -86,11 +95,27 @@ module.exports = {
             image.composite(data[2], offsetX3, offsetY3, options);
             image.composite(data[3], offsetX4, offsetY4, options);
             break;
+          default:
+            break;
         }
 
-        image.write(`..test/${Date.now()}_waterMark_150x150.png`, function () {
-          console.log('wrote the image');
-        });
+        // image.write(`..test/${Date.now()}_waterMark_150x150.png`, () => {
+        //   console.log('wrote the image');
+        // });
+        // image.getBuffer(Jimp.AUTO, (err, bug) => {
+        //   const image = {
+        //     id: '',
+        //     photo: buf,
+        //   };
+        // });
+        const buf = await image.getBufferAsync(Jimp.AUTO);
+        await Image.create(
+          { tweetId: id },
+          {
+            tweetId: id,
+            photo: buf,
+          },
+        );
       });
   },
 
