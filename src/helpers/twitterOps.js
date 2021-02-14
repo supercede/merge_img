@@ -21,7 +21,7 @@ module.exports = {
   getAllMentions: async () => {
     let allTweets = [];
     return T.get('statuses/mentions_timeline', {
-      // since_id: 1357914189273170000,
+      // since_id: '1360587705969758208',
       // count: 2,
     })
       .then(r => r.data)
@@ -41,8 +41,8 @@ module.exports = {
       .catch(e => console.log('error', e));
   },
 
-  getReferencedTweets: mentions => {
-    return T.post(`statuses/lookup`, {
+  getReferencedTweets: mentions =>
+    T.post('statuses/lookup', {
       id: pluck(mentions, 'referencing_tweet'),
       tweet_mode: 'extended',
     })
@@ -50,20 +50,24 @@ module.exports = {
       .then(tweets => tweets.filter(and(filterTweetImages)))
       .then(tweets => {
         const allTweets = tweets.map(tweetObject => {
+          const mentionId = mentions.find(
+            mention => mention.referencing_tweet === tweetObject.id_str,
+          );
+
           return {
             id: tweetObject.id_str,
             time: tweetObject.created_at,
             author: tweetObject.user.screen_name,
             media: tweetObject.extended_entities.media,
-            // mention_id: me
+            mention_id: mentionId.id,
+            mention_author: mentionId.author,
           };
         });
         return allTweets;
         // return tweets;
       })
       .then(tweets => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
-      .catch(e => wrapTwitterErrors('statuses/lookup', e));
-  },
+      .catch(e => wrapTwitterErrors('statuses/lookup', e)),
 
   replyWithPhoto: async (media, tweet, content) => {
     console.log('1');
@@ -85,9 +89,9 @@ module.exports = {
           if (!err) {
             // now we can reference the media and post a tweet (media will attach to the tweet)
             const params = {
-              status: `@${tweet.author} ${content}`,
+              status: `@${tweet.mention_author} ${content}`,
               media_ids: [mediaIdStr],
-              in_reply_to_status_id: tweet.id,
+              in_reply_to_status_id: tweet.mention_id,
             };
 
             console.log('3');

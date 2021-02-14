@@ -18,15 +18,17 @@ app.get('/tweets', async (req, res) => {
   const tweets = await twitterOps.getAllMentions();
   const results = await twitterOps.getReferencedTweets(tweets);
 
-  const entries = results.map(result => {
-    return {
-      id: result.id,
-      images: pluck(result.media, 'media_url_https'),
-      author: result.author,
-    };
-  });
+  const entries = results.map(result => ({
+    id: result.id,
+    images: pluck(result.media, 'media_url_https'),
+    author: result.author,
+    mention_id: result.mention_id,
+    mention_author: result.mention_author,
+  }));
 
-  console.log(entries);
+  console.log(entries.length);
+
+  // console.log(entries);
 
   // for (let image of images) {
   //   await joinImages(image.id, image.images);
@@ -34,26 +36,29 @@ app.get('/tweets', async (req, res) => {
 
   // entries.forEach(async entry => {
   for (let entry of entries) {
-    joinImages(entry.id, entry.images)
-      .then(() => dbHelpers.getImage(entry.id))
-      .then(
-        async image =>
+    console.log(entry);
+    await joinImages(entry.mention_id, entry.images)
+      // .then(async () => await dbHelpers.getImage(entry.mention_id))
+      .then(async image => {
+        console.log(image);
+        if (image) {
           await twitterOps.replyWithPhoto(
             image,
             entry,
             "Hi boss, here's your picture",
-          ),
-      );
+          );
+        }
+      });
     // console.log(image);
-    // res.contentType('image/png');
-    // return res.send(image.buffer);
   }
   // });
+
+  return res.send('OK');
 
   // await joinImages(imgURLs[0]);
 
   return res.status(200).json({
-    results,
+    tweets,
   });
 });
 

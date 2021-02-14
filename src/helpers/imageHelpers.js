@@ -7,125 +7,112 @@ const { getImage } = require('./dbHelpers');
 module.exports = {
   joinImages: async (id, imgArr) => {
     const checkImg = await getImage(id);
-    if (checkImg) {
-      console.log(checkImg.tweetId);
-      return;
-    }
-    let offsetX1, offsetX2, offsetX3, offsetX4;
-    let offsetY1, offsetY2, offsetY3, offsetY4;
+    if (!checkImg) {
+      // console.log(checkImg.tweetId);
+      //   return;
+      // }
+      let offsetX1, offsetX2, offsetX3, offsetX4;
+      let offsetY1, offsetY2, offsetY3, offsetY4;
 
-    offsetX1 = offsetX2 = offsetX3 = offsetX4 = 10;
-    offsetY1 = offsetY2 = offsetY3 = offsetY4 = 10;
+      offsetX1 = offsetX2 = offsetX3 = offsetX4 = 10;
+      offsetY1 = offsetY2 = offsetY3 = offsetY4 = 10;
 
-    const image = await Jimp.read('images/base/base-img-wt-wt.jpg');
-    const { height } = image.bitmap;
-    const dim = height / 2 - 15; // dimensions inc. padding
+      const imgFile =
+        imgArr.length === 2 ? 'base-img-wt.jpg' : 'base-img-wt-wt.jpg';
 
-    let imgHeight;
-    if (imgArr.length === 2) {
-      imgHeight = dim * 2;
-    } else {
-      imgHeight = dim;
-    }
+      const image = await Jimp.read(`images/base/${imgFile}`);
 
-    switch (imgArr.length) {
-      case 2:
-        // To-do
-        offsetX2 = offsetX1 * 2 + dim;
-        break;
-      case 3:
-        offsetX2 = offsetX1 * 2 + dim;
-        offsetX3 = offsetX1 + dim / 2;
-        offsetY3 = (height + offsetY1) / 2;
-        break;
-      case 4:
-        offsetX2 = offsetX1 * 2 + dim;
-        offsetX3 = offsetX1;
-        offsetX4 = offsetX2;
-        offsetY3 = (height + offsetY1) / 2;
-        offsetY4 = offsetY3;
-        break;
-      default:
-        break;
-    }
+      const { height } = image.bitmap;
+      const dim = height / 2 - 15; // dimensions inc. padding
 
-    const images = [];
-
-    // for (var i = 0; i < imgArr.length; i++) {
-    //   images.push((await Jimp.read(imgArr[i])).resize(dim, imgHeight));
-    // }
-
-    for (let i = 0; i < imgArr.length; i++) {
-      images.push(
-        Jimp.read(imgArr[i]).then(img => {
-          // console.log(img)
-          const { width, height: resizeHeight } = img.bitmap;
-          return img.resize(
-            Math.min(dim, width),
-            Math.min(imgHeight, resizeHeight),
-          );
-        }),
-      );
-    }
-
-    // return;
-
-    const options = {
-      mode: Jimp.BLEND_SOURCE_OVER,
-      opacityDest: 1,
-      opacitySource: 1,
-    };
-
-    Promise.all(images)
-      .then(data => Promise.all(images))
-      .then(async data => {
-        switch (data.length) {
-          case 2:
-            image.composite(data[0], offsetX1, offsetY1, options);
-            image.composite(data[1], offsetX2, offsetY2, options);
-            break;
-          case 3:
-            image.composite(data[0], offsetX1, offsetY1, options);
-            image.composite(data[1], offsetX2, offsetY2, options);
-            image.composite(data[2], offsetX3, offsetY3, options);
-            break;
-          case 4:
-            image.composite(data[0], offsetX1, offsetY1, options);
-            image.composite(data[1], offsetX2, offsetY2, options);
-            image.composite(data[2], offsetX3, offsetY3, options);
-            image.composite(data[3], offsetX4, offsetY4, options);
-            break;
-          default:
-            break;
-        }
-
-        // image.write(`..test/${Date.now()}_waterMark_150x150.png`, () => {
-        //   console.log('wrote the image');
-        // });
-        // image.getBuffer(Jimp.AUTO, (err, bug) => {
-        //   const image = {
-        //     id: '',
-        //     photo: buf,
-        //   };
-        // });
-        const buf = await image.getBufferAsync(Jimp.AUTO);
-        await Image.create(
-          { tweetId: id },
-          {
-            tweetId: id,
-            photo: buf,
-          },
-        );
-      });
-  },
-
-  createImg: () => {
-    new Jimp(1000, 1000, '#FFFFFF', (err, image) => {
-      if (err) {
-        console.log(err);
+      let imgHeight;
+      if (imgArr.length === 2) {
+        imgHeight = dim * 2;
+      } else {
+        imgHeight = dim;
       }
 
-      image.write('base-img-wt-wt.jpg');
-    });
+      switch (imgArr.length) {
+        case 2:
+          // To-do
+          offsetX2 = offsetX1 * 2 + dim;
+          break;
+        case 3:
+          offsetX2 = offsetX1 * 2 + dim;
+          offsetX3 = offsetX1 + dim / 2;
+          offsetY3 = (height + offsetY1) / 2;
+          break;
+        case 4:
+          offsetX2 = offsetX1 * 2 + dim;
+          offsetX3 = offsetX1;
+          offsetX4 = offsetX2;
+          offsetY3 = (height + offsetY1) / 2;
+          offsetY4 = offsetY3;
+          break;
+        default:
+          break;
+      }
+
+      const images = [];
+
+      // for (var i = 0; i < imgArr.length; i++) {
+      //   images.push((await Jimp.read(imgArr[i])).resize(dim, imgHeight));
+      // }
+
+      for (let i = 0; i < imgArr.length; i++) {
+        images.push(
+          Jimp.read(imgArr[i]).then(img => {
+            // console.log(img)
+            const { width, height: resizeHeight } = img.bitmap;
+            return img.resize(
+              Math.min(dim, width),
+              Math.min(imgHeight, resizeHeight),
+            );
+          }),
+        );
+      }
+
+      const options = {
+        mode: Jimp.BLEND_SOURCE_OVER,
+        opacityDest: 1,
+        opacitySource: 1,
+      };
+
+      Promise.all(images)
+        .then(data => Promise.all(images))
+        .then(async data => {
+          switch (data.length) {
+            case 2:
+              image.composite(data[0], offsetX1, offsetY1, options);
+              image.composite(data[1], offsetX2, offsetY2, options);
+              break;
+            case 3:
+              image.composite(data[0], offsetX1, offsetY1, options);
+              image.composite(data[1], offsetX2, offsetY2, options);
+              image.composite(data[2], offsetX3, offsetY3, options);
+              break;
+            case 4:
+              image.composite(data[0], offsetX1, offsetY1, options);
+              image.composite(data[1], offsetX2, offsetY2, options);
+              image.composite(data[2], offsetX3, offsetY3, options);
+              image.composite(data[3], offsetX4, offsetY4, options);
+              break;
+            default:
+              break;
+          }
+
+          const buf = await image.getBufferAsync(Jimp.AUTO);
+          await Image.findOrCreate(
+            { tweetId: id },
+            {
+              tweetId: id,
+              photo: buf,
+            },
+          );
+
+          return Buffer.from(buf).toString('base64');
+        });
+    }
+    return checkImg;
   },
 };
