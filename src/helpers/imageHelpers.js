@@ -8,6 +8,7 @@ module.exports = {
   joinImages: async (id, imgArr) => {
     const checkImg = await getImage(id);
     if (!checkImg) {
+      // let image;
       // console.log(checkImg.tweetId);
       //   return;
       // }
@@ -53,12 +54,11 @@ module.exports = {
           break;
       }
 
-      const images = [];
-
       // for (var i = 0; i < imgArr.length; i++) {
       //   images.push((await Jimp.read(imgArr[i])).resize(dim, imgHeight));
       // }
 
+      const images = [];
       for (let i = 0; i < imgArr.length; i++) {
         images.push(
           Jimp.read(imgArr[i]).then(img => {
@@ -78,7 +78,7 @@ module.exports = {
         opacitySource: 1,
       };
 
-      Promise.all(images)
+      return Promise.all(images)
         .then(data => Promise.all(images))
         .then(async data => {
           switch (data.length) {

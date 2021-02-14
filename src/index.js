@@ -1,6 +1,5 @@
-const { response } = require('express');
 const express = require('express');
-const dbHelpers = require('./helpers/dbHelpers');
+const cache = require('./db/cache');
 const { joinImages } = require('./helpers/imageHelpers');
 const twitterOps = require('./helpers/twitterOps');
 const { pluck } = require('./utils/utils');
@@ -16,6 +15,10 @@ app.get('/', (req, res) => {
 
 app.get('/tweets', async (req, res) => {
   const tweets = await twitterOps.getAllMentions();
+
+  if (tweets.length) {
+    cache.setItem('lastTweetId', tweets[0].id);
+  }
   const results = await twitterOps.getReferencedTweets(tweets);
 
   const entries = results.map(result => ({
@@ -26,21 +29,12 @@ app.get('/tweets', async (req, res) => {
     mention_author: result.mention_author,
   }));
 
-  console.log(entries.length);
-
-  // console.log(entries);
-
-  // for (let image of images) {
-  //   await joinImages(image.id, image.images);
-  // }
-
-  // entries.forEach(async entry => {
-  for (let entry of entries) {
+  entries.forEach(async entry => {
     console.log(entry);
-    await joinImages(entry.mention_id, entry.images)
+    joinImages(entry.id, entry.images)
       // .then(async () => await dbHelpers.getImage(entry.mention_id))
       .then(async image => {
-        console.log(image);
+        // console.log(image);
         if (image) {
           await twitterOps.replyWithPhoto(
             image,
@@ -49,30 +43,9 @@ app.get('/tweets', async (req, res) => {
           );
         }
       });
-    // console.log(image);
-  }
-  // });
+  });
 
   return res.send('OK');
-
-  // await joinImages(imgURLs[0]);
-
-  return res.status(200).json({
-    tweets,
-  });
-});
-
-app.post('/images', async (req, res) => {
-  const imgs = req.body.images;
-
-  if (!imgs || imgs.length < 2) {
-    return res.status(400).json({
-      message: 'Invalid Image length',
-    });
-  }
-
-  await joinImages(imgs);
-  return res.send({ message: 'Done' });
 });
 
 app.listen(5000, () => {

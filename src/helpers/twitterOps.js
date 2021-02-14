@@ -8,6 +8,7 @@ const {
   doesTweetHaveAtLeastTwoPhotos,
 } = require('../utils/tweetUtils');
 const { not, and, pluck } = require('../utils/utils');
+const cache = require('../db/cache');
 require('dotenv').config();
 
 const T = new Twit({
@@ -18,12 +19,16 @@ const T = new Twit({
 });
 
 module.exports = {
-  getAllMentions: async () => {
+  getAllMentions: async lastTweet => {
+    const lastTweetId = lastTweet || (await cache.getItem('lastTweetId'));
+    console.log('lastTweetId', lastTweetId);
     let allTweets = [];
-    return T.get('statuses/mentions_timeline', {
-      // since_id: '1360587705969758208',
-      // count: 2,
-    })
+    const options = {};
+
+    if (lastTweetId) {
+      options.since_id = lastTweetId;
+    }
+    return T.get('statuses/mentions_timeline', options)
       .then(r => r.data)
       .then(tweets => tweets.filter(and(isTweetAReply, not(isTweetAReplyToMe))))
       .then(tweets => {
