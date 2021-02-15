@@ -1,7 +1,6 @@
 {
   "singleQuote": true,
   "trailingComma": "all",
-  "parser": "flow",
   "endOfLine": "auto",
   "arrowParens": "avoid",
   "printWidth": 100

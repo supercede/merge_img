@@ -1,6 +1,6 @@
 // /* eslint-disable */
 const Twit = require('twit');
-const { wrapTwitterErrors, errors } = require('twitter-error-handler');
+const { wrapTwitterErrors } = require('twitter-error-handler');
 const {
   isTweetAReply,
   isTweetAReplyToMe,
@@ -21,12 +21,11 @@ const T = new Twit({
 module.exports = {
   getAllMentions: async lastTweet => {
     const lastTweetId = lastTweet || (await cache.getItem('lastTweetId'));
-    console.log('lastTweetId', lastTweetId);
     let allTweets = [];
     const options = {};
 
     if (lastTweetId) {
-      // options.since_id = lastTweetId;
+      options.since_id = lastTweetId;
     }
     return T.get('statuses/mentions_timeline', options)
       .then(r => r.data)
@@ -40,7 +39,6 @@ module.exports = {
         }));
 
         return allTweets;
-        // return tweets;
       })
       .catch(e => console.log('error', e));
   },
@@ -64,7 +62,6 @@ module.exports = {
             author: tweetObject.user.screen_name,
             media: tweetObject.extended_entities.media,
             mention_id: mentionId.id,
-            // images: pluck(tweetObject.extended_entities.media, 'media_url_https'),
             mention_author: mentionId.author,
           };
         });
@@ -79,7 +76,7 @@ module.exports = {
     T.post('media/upload', { media }, (err, data, response) => {
       const mediaIdStr = data.media_id_string;
       const meta_params = { media_id: mediaIdStr };
-      console.log('2');
+      console.log('added media');
 
       // add media data to uploaded photo
       if (!err) {
@@ -92,7 +89,7 @@ module.exports = {
               in_reply_to_status_id: tweet.mention_id,
             };
 
-            console.log('3');
+            console.log('replied');
 
             if (!err) {
               T.post('statuses/update', params)
@@ -106,7 +103,3 @@ module.exports = {
       }
     }),
 };
-
-// const getTweets = () => {};
-
-// getTweets();
