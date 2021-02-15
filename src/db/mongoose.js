@@ -17,13 +17,12 @@ const options = {
 
 let db;
 
-console.log(NODE_ENV);
-
 if (NODE_ENV === 'development') {
   db = MONGO_DEV_DB;
   // mongoose.set('debug', true);
 } else {
   db = MONGO_PROD_DB.replace('<password>', MONGO_PW);
+  console.log(db);
 }
 
 const connectWithRetry = () => {
@@ -33,7 +32,7 @@ const connectWithRetry = () => {
     .then(() => {
       console.log('MongoDB is connected');
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
       console.log('MongoDB connection unsuccessful, retry after 2 seconds.');
       setTimeout(connectWithRetry, 2000);

@@ -42,8 +42,7 @@ module.exports = {
         orientation = mode(orientations);
       }
 
-      const imgFile =
-        imgArr.length === 2 ? `base-img-${orientation}.jpg` : `base-img-${orientation}-lg.jpg`;
+      const imgFile = imgArr.length === 2 ? `base-img-${orientation}.jpg` : `base-img-${orientation}-lg.jpg`;
 
       const image = await Jimp.read(`images/base/${imgFile}`);
 

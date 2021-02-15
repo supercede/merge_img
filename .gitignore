@@ -2,5 +2,4 @@ test
 imgs
 node_modules
 .env
-images
 src/index.js

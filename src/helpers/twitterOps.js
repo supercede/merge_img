@@ -43,33 +43,32 @@ module.exports = {
       .catch(e => console.log('error', e));
   },
 
-  getReferencedTweets: mentions =>
-    T.post('statuses/lookup', {
-      id: pluck(mentions, 'referencing_tweet'),
-      tweet_mode: 'extended',
-    })
-      .then(r => r.data)
-      .then(tweets => tweets.filter(and(filterTweetImages)))
-      .then(tweets => {
-        const allTweets = tweets.map(tweetObject => {
-          const mentionId = mentions.find(
-            mention => mention.referencing_tweet === tweetObject.id_str,
-          );
+  getReferencedTweets: mentions => T.post('statuses/lookup', {
+    id: pluck(mentions, 'referencing_tweet'),
+    tweet_mode: 'extended',
+  })
+    .then(r => r.data)
+    .then(tweets => tweets.filter(and(filterTweetImages)))
+    .then(tweets => {
+      const allTweets = tweets.map(tweetObject => {
+        const mentionId = mentions.find(
+          mention => mention.referencing_tweet === tweetObject.id_str,
+        );
 
-          return {
-            id: tweetObject.id_str,
-            time: tweetObject.created_at,
-            author: tweetObject.user.screen_name,
-            media: tweetObject.extended_entities.media,
-            mention_id: mentionId.id,
-            mention_author: mentionId.author,
-          };
-        });
-        return allTweets;
-        // return tweets;
-      })
-      .then(tweets => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
-      .catch(e => wrapTwitterErrors('statuses/lookup', e)),
+        return {
+          id: tweetObject.id_str,
+          time: tweetObject.created_at,
+          author: tweetObject.user.screen_name,
+          media: tweetObject.extended_entities.media,
+          mention_id: mentionId.id,
+          mention_author: mentionId.author,
+        };
+      });
+      return allTweets;
+      // return tweets;
+    })
+    .then(tweets => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
+    .catch(e => wrapTwitterErrors('statuses/lookup', e)),
 
   replyWithPhoto: async (media, tweet, content) =>
     // Upload photo
