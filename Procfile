@@ -1,1 +1,1 @@
-web: node src/handler.js
+worker: node src/handler.js
