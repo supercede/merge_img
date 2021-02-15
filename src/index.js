@@ -9,10 +9,6 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  return res.send({ message: 'hello' });
-});
-
 app.get('/tweets', async (req, res) => {
   const tweets = await twitterOps.getAllMentions();
 
@@ -31,18 +27,14 @@ app.get('/tweets', async (req, res) => {
 
   entries.forEach(async entry => {
     console.log(entry);
-    joinImages(entry.id, entry.images)
-      // .then(async () => await dbHelpers.getImage(entry.mention_id))
-      .then(async image => {
-        // console.log(image);
-        if (image) {
-          await twitterOps.replyWithPhoto(
-            image,
-            entry,
-            "Hi boss, here's your picture",
-          );
-        }
-      });
+    joinImages(entry.id, entry.images);
+    // .then(async () => await dbHelpers.getImage(entry.mention_id))
+    // .then(async image => {
+    //   // console.log(image);
+    //   if (image) {
+    //     await twitterOps.replyWithPhoto(image, entry, "Hi boss, here's your picture");
+    //   }
+    // });
   });
 
   return res.send('OK');

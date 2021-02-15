@@ -26,20 +26,19 @@ module.exports = {
     const options = {};
 
     if (lastTweetId) {
-      options.since_id = lastTweetId;
+      // options.since_id = lastTweetId;
     }
     return T.get('statuses/mentions_timeline', options)
       .then(r => r.data)
       .then(tweets => tweets.filter(and(isTweetAReply, not(isTweetAReplyToMe))))
       .then(tweets => {
-        allTweets = tweets.map(tweetObject => {
-          return {
-            id: tweetObject.id_str,
-            time: tweetObject.created_at,
-            referencing_tweet: tweetObject.in_reply_to_status_id_str,
-            author: tweetObject.user.screen_name,
-          };
-        });
+        allTweets = tweets.map(tweetObject => ({
+          id: tweetObject.id_str,
+          time: tweetObject.created_at,
+          referencing_tweet: tweetObject.in_reply_to_status_id_str,
+          author: tweetObject.user.screen_name,
+        }));
+
         return allTweets;
         // return tweets;
       })
@@ -65,6 +64,7 @@ module.exports = {
             author: tweetObject.user.screen_name,
             media: tweetObject.extended_entities.media,
             mention_id: mentionId.id,
+            // images: pluck(tweetObject.extended_entities.media, 'media_url_https'),
             mention_author: mentionId.author,
           };
         });
@@ -74,21 +74,14 @@ module.exports = {
       .then(tweets => tweets.filter(and(doesTweetHaveAtLeastTwoPhotos)))
       .catch(e => wrapTwitterErrors('statuses/lookup', e)),
 
-  replyWithPhoto: async (media, tweet, content) => {
-    console.log('1');
-    return T.post('media/upload', { media }, (err, data, response) => {
-      // now we can assign alt text to the media, for use by screen readers and
-      // other text-based presentations and interpreters
-      // console.log('err', err);
-      console.log('err', err);
-      console.log('response', response.statusMessage);
-
+  replyWithPhoto: async (media, tweet, content) =>
+    // Upload photo
+    T.post('media/upload', { media }, (err, data, response) => {
       const mediaIdStr = data.media_id_string;
-      // const altText =
-      //   'Small flowers in a planter on a sunny balcony, blossoming.';
       const meta_params = { media_id: mediaIdStr };
       console.log('2');
 
+      // add media data to uploaded photo
       if (!err) {
         T.post('media/metadata/create', meta_params, (err, data, response) => {
           if (!err) {
@@ -103,7 +96,6 @@ module.exports = {
 
             if (!err) {
               T.post('statuses/update', params)
-                .then(res => console.log)
                 .catch(e => wrapTwitterErrors('statuses/update', e))
                 .catch(e => {
                   console.log(e);
@@ -112,20 +104,7 @@ module.exports = {
           }
         });
       }
-    });
-  },
-
-  reply: async (tweet, content) => {
-    const options = {
-      in_reply_to_status_id: tweet.id,
-      status: `@${tweet.author} ${content}`,
-    };
-    return T.post('statuses/update', options)
-      .catch(e => wrapTwitterErrors('statuses/update', e))
-      .catch(e => {
-        console.log(e);
-      });
-  },
+    }),
 };
 
 // const getTweets = () => {};

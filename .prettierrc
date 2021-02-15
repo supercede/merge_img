@@ -3,5 +3,6 @@
   "trailingComma": "all",
   "parser": "flow",
   "endOfLine": "auto",
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "printWidth": 100
 }

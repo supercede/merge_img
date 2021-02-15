@@ -2,24 +2,19 @@ const Jimp = require('jimp');
 const Image = require('../models/image');
 const { getImage } = require('./dbHelpers');
 
-/* eslint-disable no-new */
+/* eslint-disable no-new, no-multi-assign */
 
 module.exports = {
   joinImages: async (id, imgArr) => {
     const checkImg = await getImage(id);
     if (!checkImg) {
-      // let image;
-      // console.log(checkImg.tweetId);
-      //   return;
-      // }
       let offsetX1, offsetX2, offsetX3, offsetX4;
       let offsetY1, offsetY2, offsetY3, offsetY4;
 
       offsetX1 = offsetX2 = offsetX3 = offsetX4 = 10;
       offsetY1 = offsetY2 = offsetY3 = offsetY4 = 10;
 
-      const imgFile =
-        imgArr.length === 2 ? 'base-img-wt.jpg' : 'base-img-wt-wt.jpg';
+      const imgFile = imgArr.length === 2 ? 'base-img-wt.jpg' : 'base-img-wt-wt.jpg';
 
       const image = await Jimp.read(`images/base/${imgFile}`);
 
@@ -35,7 +30,7 @@ module.exports = {
 
       switch (imgArr.length) {
         case 2:
-          // To-do
+          // to do?
           offsetX2 = offsetX1 * 2 + dim;
           break;
         case 3:
@@ -54,20 +49,13 @@ module.exports = {
           break;
       }
 
-      // for (var i = 0; i < imgArr.length; i++) {
-      //   images.push((await Jimp.read(imgArr[i])).resize(dim, imgHeight));
-      // }
-
       const images = [];
       for (let i = 0; i < imgArr.length; i++) {
         images.push(
           Jimp.read(imgArr[i]).then(img => {
             // console.log(img)
             const { width, height: resizeHeight } = img.bitmap;
-            return img.resize(
-              Math.min(dim, width),
-              Math.min(imgHeight, resizeHeight),
-            );
+            return img.resize(Math.min(dim, width), Math.min(imgHeight, resizeHeight));
           }),
         );
       }
@@ -102,6 +90,13 @@ module.exports = {
           }
 
           const buf = await image.getBufferAsync(Jimp.AUTO);
+          await image.write(`../../test/${Date.now()}.jpg`, (err, data) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log('a ti ko');
+            }
+          });
           await Image.findOrCreate(
             { tweetId: id },
             {
