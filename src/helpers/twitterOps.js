@@ -1,6 +1,7 @@
 // /* eslint-disable */
 const Twit = require('twit');
 const { wrapTwitterErrors } = require('twitter-error-handler');
+const { getAsync } = require('../db/cache');
 const {
   isTweetAReply,
   isTweetAReplyToMe,
@@ -8,7 +9,6 @@ const {
   doesTweetHaveAtLeastTwoPhotos,
 } = require('../utils/tweetUtils');
 const { not, and, pluck } = require('../utils/utils');
-const cache = require('../db/cache');
 require('dotenv').config();
 
 const T = new Twit({
@@ -20,7 +20,7 @@ const T = new Twit({
 
 module.exports = {
   getAllMentions: async lastTweet => {
-    const lastTweetId = lastTweet || (await cache.getItem('lastTweetId'));
+    const lastTweetId = lastTweet || (await getAsync('lastTweetId'));
     let allTweets = [];
     const options = {};
 

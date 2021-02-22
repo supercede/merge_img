@@ -1,11 +1,18 @@
-// file to manage the actual connections to the persist data store
+const redis = require('redis');
+const { promisify } = require('util');
+require('dotenv').config();
 
-const storage = require('node-persist');
+const client = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+});
 
-const db = storage.create({ dir: './node-persist/data' });
+client.on('connect', () => {
+  console.log('connected to redis server');
+});
 
-const init = async () => db.init();
+const getAsync = promisify(client.get).bind(client);
 
-init();
-
-module.exports = db;
+exports.getAsync = getAsync;
+exports.client = client;
